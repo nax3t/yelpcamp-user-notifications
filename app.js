@@ -1,7 +1,5 @@
 var express          = require("express"),
     app              = express(),
-    http             = require("http").Server(app),
-    io               = require("socket.io")(http),
     bodyParser       = require("body-parser"),
     mongoose         = require("mongoose"),
     flash            = require("connect-flash"),
@@ -15,7 +13,7 @@ var express          = require("express"),
     
 //requiring routes
 var commentRoutes    = require("./routes/comments"),
-    campgroundRoutes = require("./routes/campgrounds")(io),
+    campgroundRoutes = require("./routes/campgrounds"),
     indexRoutes      = require("./routes/index")
     
 mongoose.connect("mongodb://localhost:27017/yelp_camp_v10", {useNewUrlParser: true});
@@ -44,7 +42,7 @@ app.use(async function(req, res, next){
    if(req.user) {
     try {
       let user = await User.findById(req.user._id).populate('notifications', null, { isRead: false }).exec();
-      res.locals.notifications = user.notifications;
+      res.locals.notifications = user.notifications.reverse();
     } catch(err) {
       console.log(err.message);
     }
@@ -58,6 +56,6 @@ app.use("/", indexRoutes);
 app.use("/campgrounds", campgroundRoutes);
 app.use("/campgrounds/:id/comments", commentRoutes);
 
-http.listen(3000, function(){
+app.listen(process.env.PORT || 3000, process.env.IP, function(){
   console.log("listening on *:3000");
 });

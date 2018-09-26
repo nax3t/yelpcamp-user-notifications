@@ -77,7 +77,10 @@ router.get('/follow/:id', isLoggedIn, async function(req, res) {
 // view all notifications
 router.get('/notifications', isLoggedIn, async function(req, res) {
   try {
-    let user = await User.findById(req.user._id).populate('notifications').exec();
+    let user = await User.findById(req.user._id).populate({
+      path: 'notifications',
+      options: { sort: { "_id": -1 } }
+    }).exec();
     let allNotifications = user.notifications;
     res.render('notifications/index', { allNotifications });
   } catch(err) {
