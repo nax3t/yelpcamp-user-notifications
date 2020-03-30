@@ -3,6 +3,41 @@
 		  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
 		  crossorigin="anonymous"></script>
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
+		<!-- We're pulling in Axios for AJAX requests -->
+		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+		<!-- Pusher -->
+		<script src="https://js.pusher.com/4.1/pusher.min.js"></script>
+		<script>
+			var currentUser = document.getElementById('currentUser');
+			var pusherAppKey = "<%= pusherAppKey %>";
+			var pusherAppCluster = "<%= pusherAppCluster %>";
+			if(currentUser) {
+				var pusher = new Pusher(pusherAppKey, {
+					cluster: pusherAppCluster,
+					forceTLS: true
+				});
+	
+				// retrieve the socket ID once we're connected
+				pusher.connection.bind('connected', function () {
+					// attach the socket ID to all outgoing Axios requests
+					axios.defaults.headers.common['X-Socket-Id'] = pusher.connection.socket_id;
+				});
+	
+				Notification.requestPermission();
+				pusher.subscribe('notifications')
+						.bind('campground_updated', function (pusherObj) {
+							if (pusherObj.followers.includes(currentUser.dataset.id)) {
+								var count = Number($('#notificationCount').text());
+								$('#notificationCount').text(++count);
+								var notification = new Notification(pusherObj.username + " added a new campground. Check it out.");
+								notification.onclick = function (event) {
+									window.location.href = '/notifications';
+									event.preventDefault();
+									notification.close();
+								}
+							}
+						});
+			}
+		</script>
     </body>
 </html>

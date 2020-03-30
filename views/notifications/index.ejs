@@ -2,13 +2,28 @@
 
 <h1>Notifications</h1>
 
+<h3>Unread</h3>
 <ul>
 	<% allNotifications.forEach(function(notification) { %>
-	<li>
-		<a href="/campgrounds/<%= notification.campgroundId %>">
-			<%= notification.username %> created a new campground %>
-		</a>
-	</li>
+		<% if(!notification.isRead) { %>
+			<li>
+				<a href="/notifications/<%= notification._id %>">
+					<%= notification.username %> created a new campground %>
+				</a>
+			</li>
+		<% } %>
+	<% }); %>
+</ul>
+<h3>Read</h3>
+<ul>
+	<% allNotifications.forEach(function(notification) { %>
+		<% if(notification.isRead) { %>
+			<li>
+				<a href="/campgrounds/<%= notification.campgroundId %>">
+					<%= notification.username %> created a new campground %>
+				</a>
+			</li>
+		<% } %>
 	<% }); %>
 </ul>
 

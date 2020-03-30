@@ -1,5 +1,8 @@
+require('dotenv').config();
+
 var express          = require("express"),
     app              = express(),
+    session          = require("express-session"),
     bodyParser       = require("body-parser"),
     mongoose         = require("mongoose"),
     flash            = require("connect-flash"),
@@ -15,8 +18,8 @@ var express          = require("express"),
 var commentRoutes    = require("./routes/comments"),
     campgroundRoutes = require("./routes/campgrounds"),
     indexRoutes      = require("./routes/index")
-    
-mongoose.connect("mongodb://localhost:27017/yelp_camp_v10", {useNewUrlParser: true});
+
+mongoose.connect("mongodb://localhost:27017/yelp_camp_v10", {useNewUrlParser: true, useUnifiedTopology: true});
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
@@ -26,10 +29,12 @@ app.use(flash());
 // seedDB(); //seed the database
 
 // PASSPORT CONFIGURATION
-app.use(require("express-session")({
-    secret: "Once again Rusty wins cutest dog!",
-    resave: false,
-    saveUninitialized: false
+let name = process.env.PORT == 3000 ? 'foo1' : 'foo2';
+app.use(session({
+  name,
+  secret: "Once again Rusty wins cutest dog!",
+  resave: false,
+  saveUninitialized: false
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -52,10 +57,13 @@ app.use(async function(req, res, next){
    next();
 });
 
+app.locals.pusherAppKey = process.env.PUSHER_APP_KEY;
+app.locals.pusherAppCluster = process.env.PUSHER_APP_CLUSTER;
+
 app.use("/", indexRoutes);
 app.use("/campgrounds", campgroundRoutes);
 app.use("/campgrounds/:id/comments", commentRoutes);
 
-app.listen(process.env.PORT || 3000, process.env.IP, function(){
-  console.log("listening on *:3000");
+app.listen(process.env.PORT, process.env.IP, function(){
+  console.log("listening on " + process.env.PORT);
 });

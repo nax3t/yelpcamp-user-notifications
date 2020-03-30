@@ -4,6 +4,13 @@ var Campground = require("../models/campground");
 var User = require("../models/user");
 var Notification = require("../models/notification");
 var middleware = require("../middleware");
+let Pusher = require('pusher');
+let pusher = new Pusher({
+  appId: process.env.PUSHER_APP_ID,
+  key: process.env.PUSHER_APP_KEY,
+  secret: process.env.PUSHER_APP_SECRET,
+  cluster: process.env.PUSHER_APP_CLUSTER
+});
 
 //INDEX - show all campgrounds
 router.get("/", function(req, res){
@@ -31,7 +38,7 @@ router.post("/", middleware.isLoggedIn, async function(req, res){
 
     try {
       let campground = await Campground.create(newCampground);
-      let user = await User.findById(req.user._id).populate('followers').exec();
+      let user = await User.findById(req.user._id).populate('followers');
       let newNotification = {
         username: req.user.username,
         campgroundId: campground.id
@@ -41,10 +48,17 @@ router.post("/", middleware.isLoggedIn, async function(req, res){
         follower.notifications.push(notification);
         follower.save();
       }
+      let pusherObj = {
+        username: req.user.username,
+        followers: req.user.followers,
+      }
+
+      pusher.trigger('notifications', 'campground_updated', pusherObj, req.headers['x-socket-id']);
 
       //redirect back to campgrounds page
       res.redirect(`/campgrounds/${campground.id}`);
     } catch(err) {
+      console.log(err);
       req.flash('error', err.message);
       res.redirect('back');
     }
@@ -62,7 +76,6 @@ router.get("/:id", function(req, res){
         if(err){
             console.log(err);
         } else {
-            console.log(foundCampground)
             //render show template with that campground
             res.render("campgrounds/show", {campground: foundCampground});
         }
